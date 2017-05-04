@@ -1,11 +1,11 @@
 CC = gcc
 PARAMS = -g -fopenmp
 
-EXEC = harmonic
+EXEC = uniq
 
 all:
-	$(CC) $(PARAMS) -c harmonic.c -o harmonic.o
-	$(CC) $(PARAMS) -o $(EXEC) harmonic.o
+	$(CC) $(PARAMS) -c uniq.c -o uniq.o
+	$(CC) $(PARAMS) -o $(EXEC) uniq.o
 
 clean:
 	rm -rf *.o $(EXEC)
