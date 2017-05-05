@@ -1,11 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/*
-2^27 = 134217728 => 17s
-
-*/
-
 /*---------------------------------------------------------------------------*/
 
 void generate_bitonic_sequence(unsigned int *elem, long long int n);
@@ -74,7 +69,7 @@ verify(unsigned int *elem, long long int n) {
 
 int
 main(int argc, char *argv[]) {
-    unsigned i, j, k;
+    unsigned int i, j, k;
     long long int n;
     unsigned int *elem;
 
@@ -98,6 +93,7 @@ main(int argc, char *argv[]) {
 
     // log n steps
     for (k = n/2; k >= 1; k /= 2) {
+        printf("k = %u\n", k);
         // loop through halves
         for (i = 0; i < n; i += k) {
             // loop through elements of a half
