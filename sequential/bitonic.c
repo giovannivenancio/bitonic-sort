@@ -8,16 +8,18 @@
 
 /*---------------------------------------------------------------------------*/
 
-void generate_bitonic_sequence(long long int *elem, long long int n);
+void generate_bitonic_sequence(unsigned int *elem, long long int n);
 void header(long long int n);
-void swap(long long int *elem, int i, int k);
-void verify(long long int *elem, int n);
+void swap(unsigned int *elem, unsigned int i, unsigned int k);
+void verify(unsigned int *elem, long long int n);
 
 /*---------------------------------------------------------------------------*/
 
 void
-generate_bitonic_sequence(long long int *elem, long long int n) {
-    int i = 0, j = n/2, k = 0;
+generate_bitonic_sequence(unsigned int *elem, long long int n) {
+    unsigned int i = 0;
+    unsigned int j = n/2;
+    unsigned int k = 0;
 
     while (k < n) {
         if (i < n/2) {
@@ -47,8 +49,8 @@ header(long long int n) {
 /*---------------------------------------------------------------------------*/
 
 void
-swap(long long int *elem, int i, int k) {
-    int aux = elem[i+k];
+swap(unsigned int *elem, unsigned int i, unsigned int k) {
+    unsigned int aux = elem[i+k];
     elem[i+k] = elem[i];
     elem[i] = aux;
 }
@@ -56,8 +58,8 @@ swap(long long int *elem, int i, int k) {
 /*---------------------------------------------------------------------------*/
 
 void
-verify(long long int *elem, int n) {
-    int i;
+verify(unsigned int *elem, long long int n) {
+    unsigned int i;
 
     for (i = 0; i < n; i++) {
         if (elem[i] > elem[i+1] && i+1 < n) {
@@ -72,9 +74,9 @@ verify(long long int *elem, int n) {
 
 int
 main(int argc, char *argv[]) {
-    int i, j, k;
+    unsigned i, j, k;
     long long int n;
-    long long int *elem;
+    unsigned int *elem;
 
     if (argc != 2) {
         printf("Usage: %s <N>\n", argv[0]);
@@ -84,7 +86,12 @@ main(int argc, char *argv[]) {
         n = atoll(argv[1]);
     }
 
-    elem = malloc(n * sizeof(long long int*));
+    elem = malloc(n * sizeof(unsigned int));
+
+    if( elem == NULL ) {
+        puts("malloc falhou!!!");
+        exit(1);
+    }
 
     header(n);
     generate_bitonic_sequence(elem, n);
