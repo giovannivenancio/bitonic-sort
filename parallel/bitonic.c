@@ -4,19 +4,19 @@
 
 /*---------------------------------------------------------------------------*/
 
-void generate_bitonic_sequence(unsigned int *elem, long long int n);
+void generate_bitonic_sequence(int *elem, long long int n);
 void header(long long int n);
-void swap(unsigned int *elem, unsigned int i, unsigned int k);
-void verify(unsigned int *elem, long long int n);
+void swap(int *elem, int i, int k);
+void verify(int *elem, long long int n);
 
 /*---------------------------------------------------------------------------*/
 
 void
-generate_bitonic_sequence(unsigned int *elem, long long int n) {
-    unsigned int i = 0;
-    unsigned int first = 1;
-    unsigned int j = 0;
-    unsigned int k = 0;
+generate_bitonic_sequence(int *elem, long long int n) {
+    int i = 0;
+    int first = 1;
+    int j = 0;
+    int k = 0;
 
     //while (k < n) {
     #pragma omp parallel for private(i, j) firstprivate(first)
@@ -38,7 +38,11 @@ generate_bitonic_sequence(unsigned int *elem, long long int n) {
             elem[k] = j;
             j--;
         }
+
     }
+    /*for (i = 0; i < n; i++) {
+        printf("|%d", elem[i]);
+    }*/
 }
 
 /*---------------------------------------------------------------------------*/
@@ -55,8 +59,8 @@ header(long long int n) {
 /*---------------------------------------------------------------------------*/
 
 void
-swap(unsigned int *elem, unsigned int i, unsigned int k) {
-    unsigned int aux = elem[i+k];
+swap(int *elem, int i, int k) {
+    int aux = elem[i+k];
     elem[i+k] = elem[i];
     elem[i] = aux;
 }
@@ -64,25 +68,31 @@ swap(unsigned int *elem, unsigned int i, unsigned int k) {
 /*---------------------------------------------------------------------------*/
 
 void
-verify(unsigned int *elem, long long int n) {
-    unsigned int i;
+verify(int *elem, long long int n) {
+    int i;
 
+    #pragma omp parallel for
     for (i = 0; i < n; i++) {
         if (elem[i] > elem[i+1] && i+1 < n) {
             printf("Error!\n");
             exit(1);
         }
+        //printf("|%d", elem[i]);
     }
-    printf("Success!\n");
+    
+    for (i = 0; i < n; i++) {
+        printf("|%d", elem[i]);
+    }
+    printf("\nSuccess!\n");
 }
 
 /*---------------------------------------------------------------------------*/
 
 int
 main(int argc, char *argv[]) {
-    unsigned int i, j, k;
+    int i, j, k, oldK;
     long long int n;
-    unsigned int *elem;
+    int *elem;
 
     if (argc != 2) {
         printf("Usage: %s <N>\n", argv[0]);
@@ -92,7 +102,7 @@ main(int argc, char *argv[]) {
         n = atoll(argv[1]);
     }
 
-    elem = malloc(n * sizeof(unsigned int));
+    elem = malloc(n * sizeof(int));
 
     if( elem == NULL ) {
         puts("malloc falhou!!!");
@@ -101,19 +111,29 @@ main(int argc, char *argv[]) {
 
     header(n);
     generate_bitonic_sequence(elem, n);
-
+    oldK = n/2;
     // log n steps
-    for (k = n/2; k >= 1; k /= 2) {
-        printf("k = %u\n", k);
+    #pragma omp parallel for collapse(3) firstprivate(oldK)
+    for (k = n/2; k >= 1; k -= oldK/2) {
+        //printf("\nk = %u\n", k);
         // loop through halves
         for (i = 0; i < n; i += k) {
             // loop through elements of a half
-            for (j = 0; j < k; i++, j++) {
+            for (j = 0; j < k; j++) {
+                printf("I:%d\nJ:%d\n", i, j);
                 if (elem[i] > elem[i+k]) {
                     swap(elem, i, k);
                 }
+                i++;
+                if(k == 1 && i >= (n-1))
+                    oldK = 2;
+                else
+                    oldK = k;
+                printf("%d\n", k);
             }
         }
+        
+        
     }
 
     /*for (i = 0; i < n; i++) {
