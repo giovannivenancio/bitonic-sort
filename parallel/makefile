@@ -1,11 +1,11 @@
 CC = gcc
 PARAMS = -g -fopenmp
 
-EXEC = uniq
+EXEC = bitonic
 
 all:
-	$(CC) $(PARAMS) -c uniq.c -o uniq.o
-	$(CC) $(PARAMS) -o $(EXEC) uniq.o
+	$(CC) $(PARAMS) -c bitonic.c -o bitonic.o
+	$(CC) $(PARAMS) -o $(EXEC) bitonic.o
 
 clean:
 	rm -rf *.o $(EXEC)
