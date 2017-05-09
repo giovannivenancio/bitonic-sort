@@ -45,9 +45,12 @@ header(long long int n) {
 
 void
 swap(unsigned int *elem, unsigned int i, unsigned int k) {
-    unsigned int aux = elem[i+k];
-    elem[i+k] = elem[i];
-    elem[i] = aux;
+    unsigned int aux;
+    if (elem[i] > elem[i+k]) {
+        aux = elem[i+k];
+        elem[i+k] = elem[i];
+        elem[i] = aux;
+    }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -95,12 +98,10 @@ main(int argc, char *argv[]) {
     for (k = n/2; k >= 1; k /= 2) {
         printf("k = %u\n", k);
         // loop through halves
-        for (i = 0; i < n; i += k) {
+        for (i = 0; i < n; i += 2*k) {
             // loop through elements of a half
-            for (j = 0; j < k; i++, j++) {
-                if (elem[i] > elem[i+k]) {
-                    swap(elem, i, k);
-                }
+            for (j = 0; j < k; j++) {
+                swap(elem, i+j, k);
             }
         }
     }
