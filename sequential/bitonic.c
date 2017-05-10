@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 /*---------------------------------------------------------------------------*/
 
@@ -61,11 +62,18 @@ verify(unsigned int *elem, long long int n) {
 
     for (i = 0; i < n; i++) {
         if (elem[i] > elem[i+1] && i+1 < n) {
-            printf("Error!\n");
+            printf("Array isn't sorted!\n");
             exit(1);
         }
     }
-    printf("Success!\n");
+    printf("Array is sorted!\n");
+}
+
+/*---------------------------------------------------------------------------*/
+
+// http://stackoverflow.com/questions/10192903/time-in-milliseconds
+float delta(struct timeval t0, struct timeval t1) {
+    return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -75,6 +83,9 @@ main(int argc, char *argv[]) {
     unsigned int i, j, k;
     long long int n;
     unsigned int *elem;
+
+    float elapsed;
+    struct timeval t0, t1;
 
     if (argc != 2) {
         printf("Usage: %s <N>\n", argv[0]);
@@ -86,8 +97,8 @@ main(int argc, char *argv[]) {
 
     elem = malloc(n * sizeof(unsigned int));
 
-    if( elem == NULL ) {
-        puts("malloc falhou!!!");
+    if (!elem) {
+        printf("Failed to allocate memory!\n");
         exit(1);
     }
 
@@ -96,7 +107,8 @@ main(int argc, char *argv[]) {
 
     // log n steps
     for (k = n/2; k >= 1; k /= 2) {
-        printf("k = %u\n", k);
+        gettimeofday(&t0, 0);
+
         // loop through halves
         for (i = 0; i < n; i += 2*k) {
             // loop through elements of a half
@@ -104,12 +116,13 @@ main(int argc, char *argv[]) {
                 swap(elem, i+j, k);
             }
         }
+
+        gettimeofday(&t1, 0);
+        elapsed = delta(t0, t1);
+
+        printf("k = %u\nTime (ms): %.2f\n\n", k, elapsed);
     }
 
-    /*for (i = 0; i < n; i++) {
-        printf("%lld ", elem[i]);
-    }
-    printf("\n");*/
-
+    // verify if array is sorted
     verify(elem, n);
 }
