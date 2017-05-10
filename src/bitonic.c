@@ -106,7 +106,12 @@ main(int argc, char *argv[]) {
     }
 
     header(n);
+
+    gettimeofday(&t0, 0);
     generate_bitonic_sequence(elem, n);
+    gettimeofday(&t1, 0);
+    elapsed = delta(t0, t1);
+    printf("Initialized in %.2f ms\n\n", elapsed);
 
     // log n steps
     for (k = n/2; k >= 1; k /= 2) {
@@ -128,5 +133,5 @@ main(int argc, char *argv[]) {
     }
 
     // verify if array is sorted
-    verify(elem, n);
+    //verify(elem, n);
 }

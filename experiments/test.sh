@@ -19,7 +19,7 @@ else
     exit 0
 fi
 
-for i in `seq 25 27`;
+for i in `seq 26 30`;
 do
     time $BIN $((2**$i)) | grep 'N'
     echo
