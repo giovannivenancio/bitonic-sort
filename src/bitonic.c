@@ -17,6 +17,35 @@ void verify_bitonic_sequence(unsigned short int *elem, unsigned int n);
 /*---------------------------------------------------------------------------*/
 
 void
+header(unsigned int n) {
+    printf("*********************************\n");
+    printf("- Problem: Bitonic Sort\n");
+    printf("- N: %u\n", n);
+    printf("- Threads: %d\n", NTHREADS);
+    printf("*********************************\n\n");
+}
+
+/*---------------------------------------------------------------------------*/
+
+void
+swap(unsigned short int *elem, unsigned int i, unsigned int k) {
+    if (elem[i] > elem[i+k]) {
+        unsigned int aux = elem[i+k];
+        elem[i+k] = elem[i];
+        elem[i] = aux;
+    }
+}
+
+/*---------------------------------------------------------------------------*/
+
+// http://stackoverflow.com/questions/10192903/time-in-milliseconds
+float delta(struct timeval t0, struct timeval t1) {
+    return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
+}
+
+/*---------------------------------------------------------------------------*/
+
+void
 generate_bitonic_sequence(unsigned short int *elem, unsigned int n, unsigned short int repeat) {
     unsigned int i = 0, k;
     unsigned short int repeat_counter = 0;
@@ -34,29 +63,6 @@ generate_bitonic_sequence(unsigned short int *elem, unsigned int n, unsigned sho
 
     // verify if array is a bitonic sequence
     verify_bitonic_sequence(elem, n);
-}
-
-/*---------------------------------------------------------------------------*/
-
-void
-header(unsigned int n) {
-    printf("*********************************\n");
-    printf("- Problem: Bitonic Sort\n");
-    printf("- N: %u\n", n);
-    printf("- Threads: %d\n", NTHREADS);
-    printf("*********************************\n\n");
-}
-
-/*---------------------------------------------------------------------------*/
-
-void
-swap(unsigned short int *elem, unsigned int i, unsigned int k) {
-    unsigned int aux;
-    if (elem[i] > elem[i+k]) {
-        aux = elem[i+k];
-        elem[i+k] = elem[i];
-        elem[i] = aux;
-    }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -85,22 +91,14 @@ verify_bitonic_sequence(unsigned short int *elem, unsigned int n) {
 
 void
 verify_sorted(unsigned short int *elem, unsigned int n) {
-    unsigned int i;
-
-    for (i = 0; i < n; i++) {
+    for (unsigned int i = 0; i < n; i++) {
         if (elem[i] > elem[i+1] && i+1 < n) {
             printf("Array isn't sorted!\n");
             exit(1);
         }
     }
+
     printf("Array is sorted!\n");
-}
-
-/*---------------------------------------------------------------------------*/
-
-// http://stackoverflow.com/questions/10192903/time-in-milliseconds
-float delta(struct timeval t0, struct timeval t1) {
-    return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -136,6 +134,7 @@ main(int argc, char *argv[]) {
     gettimeofday(&t0, 0);
     generate_bitonic_sequence(elem, n, repeat);
     gettimeofday(&t1, 0);
+
     elapsed = delta(t0, t1);
     printf("Array initialized in %.2f ms\n\n", elapsed);
 
