@@ -1,6 +1,6 @@
 set encoding "utf8"
 set terminal postscript eps enhanced color font 'Helvetica,20';
-set output "../images/speedup.eps"
+set output "../images/eficiencia.eps"
 
 set style line 1 lt -1 lw 3 linecolor rgb "#6495ED" pi -1
 set style line 4 lt -1 lw 3 linecolor rgb "#006400" pi -1
@@ -18,15 +18,15 @@ set boxwidth 1
 
 set format xy "%g"
 
-set ylabel 'Speedup'
-set yrange [0:4]
-set ytics 0.5
+set ylabel 'Eficiência'
+set yrange [0:1]
+set ytics 0.1
 
 set logscale x 2
 set xlabel "Processadores"
 set xtics (1,2,4,8)
 
-plot "../data/speedup/n_29.dat" using 1:2 title 'N = 2^{29}' with lines ls 3, \
-     "../data/speedup/n_30.dat" using 1:2 title 'N = 2^{30}' with lines ls 2, \
-     "../data/speedup/n_31.dat" using 1:2 title 'N = 2^{31}' with lines ls 5, \
+plot "../data/eficiencia/n_29.dat" using 1:2 title 'N = 2^{29}' with lines ls 3, \
+     "../data/eficiencia/n_30.dat" using 1:2 title 'N = 2^{30}' with lines ls 2, \
+     "../data/eficiencia/n_31.dat" using 1:2 title 'N = 2^{31}' with lines ls 5, \
 
