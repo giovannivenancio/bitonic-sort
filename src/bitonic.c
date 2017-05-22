@@ -62,7 +62,7 @@ generate_bitonic_sequence(unsigned short int *elem, unsigned int n, unsigned sho
     }
 
     // verify if array is a bitonic sequence
-    verify_bitonic_sequence(elem, n);
+    //verify_bitonic_sequence(elem, n);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -91,7 +91,10 @@ verify_bitonic_sequence(unsigned short int *elem, unsigned int n) {
 
 void
 verify_sorted(unsigned short int *elem, unsigned int n) {
-    for (unsigned int i = 0; i < n; i++) {
+    unsigned int i;
+
+    #pragma omp parallel for num_threads(NTHREADS)
+    for (i = 0; i < n; i++) {
         if (elem[i] > elem[i+1] && i+1 < n) {
             printf("Array isn't sorted!\n");
             exit(1);
@@ -159,4 +162,7 @@ main(int argc, char *argv[]) {
 
     // verify if array is sorted
     verify_sorted(elem, n);
+
+    free(elem);
+    exit(0);
 }
