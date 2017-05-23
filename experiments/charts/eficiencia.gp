@@ -9,7 +9,7 @@ set style line 3 lt -1 pt 5 lw 2 linecolor rgb "#CD5C5C" pi -6
 set style line 5 lt -1 pt 13 lw 2 linecolor rgb "#000080" pi -6
 
 set zeroaxis
-set grid ytics xtics
+set grid ytics
 
 set key right top
 set key font "0.5"
