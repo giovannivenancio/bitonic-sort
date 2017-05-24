@@ -19,14 +19,14 @@ set boxwidth 1
 set format y "%g"
 
 set ylabel 'Tempo (s)'
-set yrange [0:300]
-set ytics 20
+set yrange [0:600]
+set ytics 50
 
 set logscale x 2
 set format x '2^{%L}'
 set xlabel "Tamanho do vetor"
 set xrange [:2147483648]
 
-plot "../data/tempo/sequential.dat" using (2**$1):2 title 'Bitonic Sort Sequencial' with lines ls 3, \
-     "../data/tempo/parallel.dat" using (2**$1):2 title 'Bitonic Sort Paralelo' with lines ls 2
+plot "../data/tempo/sequential.dat" using (2**$1):2 title 'Sequencial' with lines ls 3, \
+     "../data/tempo/parallel.dat" using (2**$1):2 title 'Paralelo' with lines ls 2
 

@@ -9,7 +9,7 @@ set style line 3 lt -1 pt 5 lw 2 linecolor rgb "#CD5C5C" pi -6
 set style line 5 lt -1 pt 13 lw 2 linecolor rgb "#000080" pi -6
 
 set zeroaxis
-set grid ytics
+set grid ytics xtics
 
 set key right top
 set key font "0.5"
@@ -19,12 +19,12 @@ set boxwidth 1
 set format xy "%g"
 
 set ylabel 'Eficiência'
-set yrange [0:1]
+set yrange [0.5:1]
 set ytics 0.1
 
 set logscale x 2
-set xlabel "Processadores"
-set xtics (1,2,4,8)
+set xlabel "Threads"
+set xtics (1,2,4,8,16)
 
 plot "../data/eficiencia/n_29.dat" using 1:2 title 'N = 2^{29}' with lines ls 3, \
      "../data/eficiencia/n_30.dat" using 1:2 title 'N = 2^{30}' with lines ls 2, \

@@ -9,7 +9,7 @@ set style line 3 lt -1 pt 5 lw 4 linecolor rgb "#CD5C5C" pi -6
 set style line 5 lt -1 pt 13 lw 4 linecolor rgb "#000080" pi -6
 
 set zeroaxis
-set grid ytics
+set grid ytics xtics
 
 set key right top
 set key font "0.5"
@@ -19,14 +19,14 @@ set boxwidth 1
 set format xy "%g"
 
 set ylabel 'Eficiência'
-set yrange [0:1.3]
+set yrange [0.4:1.2]
 set ytics 0.1
 
 set logscale x 2
-set xlabel "Processadores"
-set xtics (1,2,4,8)
+set xlabel "Threads"
+set xtics (1,2,4,8,16)
 
 plot "../data/eficiencia/amdahl.dat" using 1:2 title 'Amdahl ({/Symbol b} = 0.08)' with lines ls 3, \
-     "../data/eficiencia/gustafson.dat" using 1:2 title 'Gustafson-Barsis ({/Symbol a} = 0.07)' with lines ls 2, \
+     "../data/eficiencia/gustafson.dat" using 1:2 title 'Gustafson-Barsis ({/Symbol a} = 0.38)' with lines ls 2, \
      "../data/eficiencia/n_31.dat" using 1:2 title 'Aplicação' with lines ls 5, \
 
