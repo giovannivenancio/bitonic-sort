@@ -140,7 +140,7 @@ main(int argc, char *argv[]) {
 
     elapsed = delta(t0, t1);
     printf("Array initialized in %.2f ms\n\n", elapsed);
-    int c = 27;
+
     // log n steps
     for (k = n/2; k >= 1; k /= 2) {
         gettimeofday(&t0, 0);
@@ -157,9 +157,7 @@ main(int argc, char *argv[]) {
         gettimeofday(&t1, 0);
         elapsed = delta(t0, t1);
 
-        //printf("k = %u\nTime (ms): %.2f\n\n", k, elapsed);
-        printf("%d %.2f\n", c, elapsed);
-        c--;
+        printf("k = %u\nTime (ms): %.2f\n\n", k, elapsed);
     }
 
     // verify if array is sorted
