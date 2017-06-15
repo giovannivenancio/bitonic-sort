@@ -107,7 +107,7 @@ void
 verify_sorted(unsigned short int *elem, unsigned int n) {
     unsigned int i;
 
-    #pragma omp parallel for num_threads(NTHREADS)
+    //#pragma omp parallel for num_threads(NTHREADS)
     for (i = 0; i < n; i++) {
         if (elem[i] > elem[i+1] && i+1 < n) {
             printf("Array isn't sorted!\n");
@@ -121,6 +121,14 @@ verify_sorted(unsigned short int *elem, unsigned int n) {
 /*---------------------------------------------------------------------------*/
 
 int
+waitProcess(MPI_Status status, unsigned short int *elem){
+    unsigned short int recvElem[4];
+    MPI_Recv(recvElem, 4, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    updateArray(elem, recvElem);
+    return status.MPI_SOURCE;
+}
+
+int
 main(int argc, char *argv[]) {
     int finished, my_rank, n_procs, position;
     unsigned int i, j, k, n, proc_count;
@@ -132,7 +140,7 @@ main(int argc, char *argv[]) {
     struct timeval t0, t1;
     
     n = SIZE;
-    proc_count = 0;
+    proc_count = 1;
 
     // how many times a number should be repeated while filling the array
     unsigned short int repeat = n / (USHRT_MAX+1);
@@ -171,7 +179,20 @@ main(int argc, char *argv[]) {
                     MPI_Pack(&(kiPos), 1, MPI_UNSIGNED, sendElem, 32, &position, MPI_COMM_WORLD); 
                     MPI_Pack(&elem[i+j], 1, MPI_UNSIGNED_SHORT, sendElem, 32, &position, MPI_COMM_WORLD); 
                     MPI_Pack(&elem[k+i], 1, MPI_UNSIGNED_SHORT, sendElem, 32, &position, MPI_COMM_WORLD); 
-                    MPI_Send(sendElem, position, MPI_PACKED,  MPI_ANY_SOURCE, 0, MPI_COMM_WORLD); 
+
+                    if(proc_count <= 0){
+                        printf("Entrei no proc_count 0\n");
+                        int freeProcess = waitProcess(status, elem);                        
+                        proc_count++;
+                        printf("Enviando para o processo %d\n", freeProcess);
+                        MPI_Send(sendElem, position, MPI_PACKED, freeProcess, 0, MPI_COMM_WORLD); 
+                    }
+                    else{
+                        printf("Enviando normal para o proc_count %d\n", proc_count);
+                        MPI_Send(sendElem, position, MPI_PACKED, proc_count, 0, MPI_COMM_WORLD);
+                    }
+
+                    proc_count--;
                     //swap(elem, i+j, k);
                 }
                 while(proc_count <= n_procs){
@@ -179,6 +200,7 @@ main(int argc, char *argv[]) {
                     updateArray(elem, recvElem);
                     proc_count++;
                 }
+                
             }
 
             gettimeofday(&t1, 0);
@@ -195,6 +217,7 @@ main(int argc, char *argv[]) {
         MPI_Unpack(&recvElem, 32, &position, &unpck[1], 1, MPI_UNSIGNED_SHORT, MPI_COMM_WORLD);
         MPI_Unpack(&recvElem, 32, &position, &unpck[2], 1, MPI_UNSIGNED_SHORT, MPI_COMM_WORLD);
         MPI_Unpack(&recvElem, 32, &position, &unpck[3], 1, MPI_UNSIGNED_SHORT, MPI_COMM_WORLD);
+        printf("Recebi %d | %d | %d | %d\n",unpck[0], unpck[1], unpck[2], unpck[3]);
         swap(unpck, unpck[2], unpck[3]);
         MPI_Send(unpck, 4, MPI_INT,  0, 0, MPI_COMM_WORLD); 
 
