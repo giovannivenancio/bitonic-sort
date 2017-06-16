@@ -120,20 +120,22 @@ verify_sorted(unsigned short int *elem, unsigned int n) {
 
 /*---------------------------------------------------------------------------*/
 
-int
-waitProcess(MPI_Status status, unsigned short int *elem){
+void
+waitProcess(MPI_Status status, unsigned short int *elem, unsigned short int *sendElem, int position){
     unsigned short int recvElem[4];
     printf("Esperando Resposta\n");
     MPI_Recv(recvElem, 4, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
     printf("Esperei resposta e recebi %d, %d, %d, %d\n", recvElem[0], recvElem[1], recvElem[2], recvElem[3]);
     updateArray(elem, recvElem);
     printf("Vetor atualizado\n");
-    return status.MPI_SOURCE;
+    printf("SOURCE: %d\n", status.MPI_SOURCE);
+
+    MPI_Send(sendElem, position, MPI_PACKED, status.MPI_SOURCE, 0, MPI_COMM_WORLD);
 }
 
 int
 main(int argc, char *argv[]) {
-    int finished, my_rank, n_procs, position;
+    int finished, my_rank, n_procs, position, finalize;
     unsigned int i, j, k, n, proc_count;
     unsigned short int *elem;
     unsigned short int sendElem[4], recvElem[4];
@@ -178,6 +180,7 @@ main(int argc, char *argv[]) {
                 for (j = 0; j < k; j++) {
                     int ijPos = i + j;
                     int kiPos = k + i;
+		    position = 0;
                     MPI_Pack(&(ijPos), 1, MPI_INT, sendElem, 32, &position, MPI_COMM_WORLD); 
                     MPI_Pack(&(kiPos), 1, MPI_INT, sendElem, 32, &position, MPI_COMM_WORLD); 
                     MPI_Pack(&elem[i+j], 1, MPI_UNSIGNED_SHORT, sendElem, 32, &position, MPI_COMM_WORLD); 
@@ -185,10 +188,8 @@ main(int argc, char *argv[]) {
                     printf("Empacotei %d, %d, %d, %d\n", ijPos, kiPos, elem[i+j], elem[k+i]);
                     if(proc_count <= 0){
                         printf("Entrei no proc_count 0\n");
-                        int freeProcess = waitProcess(status, elem);                        
-                        proc_count++;
-                        printf("Enviando para o processo %d\n", freeProcess);
-                        MPI_Send(sendElem, position, MPI_PACKED, freeProcess, 0, MPI_COMM_WORLD); 
+                        waitProcess(status, elem, sendElem, position);
+                        proc_count++; 
                     }
                     else{
                         printf("Enviando normal para o proc_count %d\n", proc_count);
@@ -212,24 +213,40 @@ main(int argc, char *argv[]) {
             printf("k = %u\nTime (ms): %.2f\n\n", k, elapsed);
         }
 
+	int endComm = 0;
+        int position = 0;
+        MPI_Pack(&(endComm), 1, MPI_INT, sendElem, 32, &position, MPI_COMM_WORLD); 
+        MPI_Pack(&(endComm), 1, MPI_INT, sendElem, 32, &position, MPI_COMM_WORLD);
+        MPI_Pack(&(endComm), 1, MPI_INT, sendElem, 32, &position, MPI_COMM_WORLD); 
+        MPI_Pack(&(endComm), 1, MPI_INT, sendElem, 32, &position, MPI_COMM_WORLD); 
     	// verify if array is sorted
+        for(i = 1; i < n_procs; i++){
+           MPI_Send(sendElem, position, MPI_PACKED, i, 0, MPI_COMM_WORLD);
+        }
 	verify_sorted(elem, n);
 	free(elem);
+        exit(0);
     }
     else{
+        finalize = 0;
         unsigned short int unpck[4];
-        MPI_Recv(recvElem, 32, MPI_PACKED, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-        position = 0;
-        MPI_Unpack(&recvElem, 32, &position, &unpck[0], 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack(&recvElem, 32, &position, &unpck[1], 1, MPI_INT, MPI_COMM_WORLD);
-        MPI_Unpack(&recvElem, 32, &position, &unpck[2], 1, MPI_UNSIGNED_SHORT, MPI_COMM_WORLD);
-        MPI_Unpack(&recvElem, 32, &position, &unpck[3], 1, MPI_UNSIGNED_SHORT, MPI_COMM_WORLD);
-        printf("Recebi %d | %d | %d | %d\n",unpck[0], unpck[1], unpck[2], unpck[3]);
-        swap(unpck, unpck[2], unpck[3]);
-        printf("Enviando %d | %d | %d | %d\n",unpck[0], unpck[1], unpck[2], unpck[3]);
-        MPI_Send(unpck, 4, MPI_INT,  0, 0, MPI_COMM_WORLD); 
-
+        while(finalize != 1){
+	        MPI_Recv(recvElem, 32, MPI_PACKED, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        	position = 0;
+	        MPI_Unpack(&recvElem, 32, &position, &unpck[0], 1, MPI_INT, MPI_COMM_WORLD);
+        	MPI_Unpack(&recvElem, 32, &position, &unpck[1], 1, MPI_INT, MPI_COMM_WORLD);
+	        MPI_Unpack(&recvElem, 32, &position, &unpck[2], 1, MPI_UNSIGNED_SHORT, MPI_COMM_WORLD);
+        	MPI_Unpack(&recvElem, 32, &position, &unpck[3], 1, MPI_UNSIGNED_SHORT, MPI_COMM_WORLD);
+	        printf("Recebi %d | %d | %d | %d\n",unpck[0], unpck[1], unpck[2], unpck[3]);
+        	if((unpck[0] == 0) && (unpck[1] == 0))
+		  finalize = 1 ;
+		else{
+			swap(unpck, unpck[2], unpck[3]);
+		        printf("Enviando %d | %d | %d | %d\n",unpck[0], unpck[1], unpck[2], unpck[3]);
+        		MPI_Send(unpck, 4, MPI_INT,  0, 0, MPI_COMM_WORLD); 
+		}
+        }
+	free(elem);
     }
-
-    exit(0);
+    MPI_Finalize();
 }
