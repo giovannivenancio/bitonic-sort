@@ -160,7 +160,7 @@ main(int argc, char *argv[]) {
 
             // wait until all workers compute these indexes
             // indexes are equal to all workers
-            // NOTE: maybe one worker compute and broadcast through workers comm?
+            // NOTE: maybe one worker compute and broadcast indexes through workers comm?
             MPI_Barrier(workers);
 
             // given an array of indexes, compute the start index for each process
