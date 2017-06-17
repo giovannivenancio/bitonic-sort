@@ -12,21 +12,9 @@
 /*---------------------------------------------------------------------------*/
 
 void generate_bitonic_sequence(unsigned short int *elem, unsigned int n, unsigned short int repeat);
-void header(unsigned int n);
 void swap(unsigned short int *elem, unsigned int i, unsigned int k);
 void verify_sorted(unsigned short int *elem, unsigned int n);
 void verify_bitonic_sequence(unsigned short int *elem, unsigned int n);
-
-/*---------------------------------------------------------------------------*/
-
-void
-header(unsigned int n) {
-    printf("*********************************\n");
-    printf("- Problem: Bitonic Sort\n");
-    printf("- N: %u\n", n);
-    printf("- Threads: %d\n", NTHREADS);
-    printf("*********************************\n\n");
-}
 
 /*---------------------------------------------------------------------------*/
 
@@ -109,18 +97,24 @@ verify_sorted(unsigned short int *elem, unsigned int n) {
 
 int
 main(int argc, char *argv[]) {
-    int n_elems, rank, n_procs, start;
-    unsigned int i, j, k, n;
-    unsigned short int *elem;
-    float elapsed;
-    struct timeval t0, t1;
 
-    MPI_Status status;
-    MPI_Comm workers;
+    int n_elems,    // number of elements per process
+        rank,       // process rank
+        n_procs,    // total number of processes
+        start,
+        done = -1,  // used to inform master that some worker will not send more data
+        worker,
+        index;
+
+    unsigned int i, j, k, l, n;
+    unsigned short int *elem;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
+
+    // communicator of workers (i.e., all processes except master)
+    MPI_Comm workers;
     MPI_Comm_split(MPI_COMM_WORLD, (rank == 0), rank, &workers);
 
     if (argc != 2) {
@@ -131,89 +125,81 @@ main(int argc, char *argv[]) {
         n = atoll(argv[1]);
     }
 
+    // hold the indexes of elements that should be compared
+    unsigned int *to_compare;
+    to_compare = malloc((n/2) * sizeof(unsigned int));
+
+    // n/2 elements are compared per step.
+    // n_procs - 1 because we have a master process
     n_elems = (n/2)/(n_procs-1);
 
     elem = malloc(n * sizeof(unsigned short int));
 
-    if (rank == MASTER) {
-        header(n);
+    if (!elem) {
+        printf("Process %d has failed to allocate memory\n", rank);
+        exit(1);
+    }
 
+    if (rank == MASTER) {
         // how many times a number should be repeated while filling the array
         unsigned short int repeat = n / (USHRT_MAX+1);
         generate_bitonic_sequence(elem, n, repeat);
     }
 
-    printf("Worker %d ready!\n", rank);
-    // Wait all processes to begin
-    MPI_Barrier(MPI_COMM_WORLD);
-
+    // master broadcast the array to all workers.
     MPI_Bcast(elem, n, MPI_UNSIGNED_SHORT, 0, MPI_COMM_WORLD);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (rank == MASTER) {
-        for (i = 0; i < n; i++) {
-            printf("%d ", elem[i]);
-        }
-        printf("\n");
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    int c, c2, done = -1;
-    unsigned int to_compare[n/2];
     if (rank != MASTER) {
         for (k = n/2; k >= 1; k /= 2) {
-
-            c = 0;
-            for (i = 0; i < n; i += 2*k) {
+            for (i = 0, l = 0; i < n; i += 2*k) {
                 for (j = 0; j < k; j++) {
-                    to_compare[c++] = i+j;
+                    // store index of element that should be compared
+                    to_compare[l++] = i + j;
                 }
             }
 
+            // wait until all workers compute these indexes
+            // indexes are equal to all workers
+            // NOTE: maybe one worker compute and broadcast through workers comm?
             MPI_Barrier(workers);
 
+            // given an array of indexes, compute the start index for each process
+            // based on the number of elements that each process should compare.
+            // ex.: first n/2 comparisons (with n = 16 and p = 4)
+            //      worker 1: process elements 0, 1
+            //      worker 2: process elements 2, 3
+            //      worker 3: process elements 4, 5
+            //      worker 4: process elements 6, 7
             start = (rank-1) * n_elems;
             for (j = start; j < start + n_elems; j++) {
                 if (elem[to_compare[j]] > elem[to_compare[j] + k]) {
-                    printf("%d: troque %d\n", rank, to_compare[j]);
+                    // if element should be swapped, send to master the index
                     MPI_Send(&to_compare[j], 1, MPI_INT, MASTER, STD_TAG, MPI_COMM_WORLD);
                 }
             }
-            printf("%d: nada mais a trocar\n", rank);
-            MPI_Send(&done, 1, MPI_INT, MASTER, STD_TAG, MPI_COMM_WORLD);
-            MPI_Barrier(workers);
 
+            // notify master that worker has finished this step
+            MPI_Send(&done, 1, MPI_INT, MASTER, STD_TAG, MPI_COMM_WORLD);
+
+            // after master finished swapping, receive the new array
             MPI_Bcast(elem, n, MPI_UNSIGNED_SHORT, 0, MPI_COMM_WORLD);
         }
     }
     else {
-        int worker, pos;
         for (k = n/2; k >= 1; k /= 2) {
+            printf("k = %u\n", k);
 
             for (worker = 1; worker < n_procs; worker++) {
-                MPI_Recv(&pos, 1, MPI_INT, worker, STD_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                while (pos != -1) {
-                    printf("[MASTER] vou trocar %d\n", pos);
+                // receive index from worker
+                MPI_Recv(&index, 1, MPI_INT, worker, STD_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-                    /*for (i = 0; i < n; i++) {
-                        printf("%d ", elem[i]);
-                    }*/
-                    printf("\n");
-                    swap(elem, pos, pos+k);
-                    /*for (i = 0; i < n; i++) {
-                        printf("%d ", elem[i]);
-                    }
-                    printf("\n");*/
-                    MPI_Recv(&pos, 1, MPI_INT, worker, STD_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                while (index != -1) {
+                    swap(elem, index, index + k);
+                    MPI_Recv(&index, 1, MPI_INT, worker, STD_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 }
             }
-            for (i = 0; i < n; i++) {
-                printf("%d ", elem[i]);
-            }
-            printf("\n");
 
+            // after all the swaps, send new array to all workers
             MPI_Bcast(elem, n, MPI_UNSIGNED_SHORT, 0, MPI_COMM_WORLD);
         }
     }
@@ -221,9 +207,10 @@ main(int argc, char *argv[]) {
     if (rank == MASTER) {
         // verify if array is sorted
         verify_sorted(elem, n);
-
-        free(elem);
     }
+
+    free(elem);
+    free(to_compare);
 
     MPI_Finalize();
     exit(0);
