@@ -78,23 +78,6 @@ verify_bitonic_sequence(unsigned short int *elem, unsigned int n) {
 
 /*---------------------------------------------------------------------------*/
 
-void
-verify_sorted(unsigned short int *elem, unsigned int n) {
-    unsigned int i;
-
-    #pragma omp parallel for num_threads(NTHREADS)
-    for (i = 0; i < n; i++) {
-        if (elem[i] > elem[i+1] && i+1 < n) {
-            printf("Array isn't sorted!\n");
-            exit(1);
-        }
-    }
-
-    printf("Array is sorted!\n");
-}
-
-/*---------------------------------------------------------------------------*/
-
 int
 main(int argc, char *argv[]) {
 
@@ -209,16 +192,12 @@ main(int argc, char *argv[]) {
         }
     }
 
-    if (rank == MASTER) {
-        // verify if array is sorted
-        verify_sorted(elem, n);
-    }
+    MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == MASTER) {
         t_end = MPI_Wtime();
         printf("Time (s): %f\n", t_end - t_start);
     }
-
 
     free(elem);
     free(to_compare);
