@@ -109,6 +109,9 @@ main(int argc, char *argv[]) {
     unsigned int i, j, k, l, n;
     unsigned short int *elem;
 
+    double t_start,
+           t_end;
+
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &n_procs);
@@ -124,6 +127,8 @@ main(int argc, char *argv[]) {
     else {
         n = atoll(argv[1]);
     }
+
+    if (rank == MASTER) t_start = MPI_Wtime();
 
     // hold the indexes of elements that should be compared
     unsigned int *to_compare;
@@ -208,6 +213,12 @@ main(int argc, char *argv[]) {
         // verify if array is sorted
         verify_sorted(elem, n);
     }
+
+    if (rank == MASTER) {
+        t_end = MPI_Wtime();
+        printf("Time (s): %f\n", t_end - t_start);
+    }
+
 
     free(elem);
     free(to_compare);
