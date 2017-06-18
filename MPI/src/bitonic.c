@@ -146,11 +146,6 @@ main(int argc, char *argv[]) {
                 }
             }
 
-            // wait until all workers compute these indexes
-            // indexes are equal to all workers
-            // NOTE: maybe one worker compute and broadcast indexes through workers comm?
-            MPI_Barrier(workers);
-
             // given an array of indexes, compute the start index for each process
             // based on the number of elements that each process should compare.
             // ex.: first n/2 comparisons (with n = 16 and p = 4)
@@ -171,6 +166,9 @@ main(int argc, char *argv[]) {
 
             // after master finished swapping, receive the new array
             MPI_Bcast(elem, n, MPI_UNSIGNED_SHORT, 0, MPI_COMM_WORLD);
+
+            // wait until all workers are ready
+            MPI_Barrier(workers);
         }
     }
     else {
@@ -191,8 +189,6 @@ main(int argc, char *argv[]) {
             MPI_Bcast(elem, n, MPI_UNSIGNED_SHORT, 0, MPI_COMM_WORLD);
         }
     }
-
-    MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == MASTER) {
         t_end = MPI_Wtime();
